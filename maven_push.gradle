@@ -1,0 +1,84 @@
+
+apply plugin: 'maven'
+apply plugin: "signing"
+
+signing {
+    sign configurations.archives
+}
+group = "win.oscene"
+archivesBaseName = "robust-client"
+version = "1.0"
+
+tasks.withType(JavaCompile){
+    options.encoding("utf-8")
+}
+
+task sourceJar(type: Jar){
+    from android.sourceSets.main.java.srcDirs
+    classifier("sources")
+}
+
+task docTask(type: Javadoc){
+    failOnError(true)
+    source = android.sourceSets.main.java.sourceFiles
+}
+
+task docJar(type: Jar, dependsOn: docTask){
+    from docTask.destinationDir
+    classifier("javadoc")
+
+}
+
+
+
+
+
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment {
+                MavenDeployment deployment -> signing.signPom(deployment)
+            }
+            repository(
+                    url: "${nexusUrl}/service/local/staging/deploy/maven2/") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            snapshotRepository(
+                    url: "${nexusUrl}/content/repositories/snapshots") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+
+            pom.project {
+                name 'robust-client'
+                groupId "win.oscene"
+                artifactId "robust-client"
+                version "1.0"
+                packaging 'aar'
+                description 'robust client'
+                url "https://github.com/swiftloop/robust-client"
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers{
+                    developer{
+                        name "sorata"
+                        url "https://github.com/swiftloop"
+                        email "904198187@qq.com"
+                    }
+                }
+                scm {
+                    url "https://github.com/swiftloop/robust-client.git"
+                    connection "scm:git:https://github.com/swiftloop/robust-client.git"
+                }
+            }
+        }
+    }
+}
+
+artifacts{
+    archives(sourceJar,docJar)
+}
